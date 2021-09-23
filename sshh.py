@@ -1,6 +1,7 @@
 import argparse
 import os
 import subprocess
+import sys
 import yaml
 
 import pathlib
@@ -50,7 +51,7 @@ args = parser.parse_args()
 # init config file
 if not os.path.isfile(args.file):
     path = pathlib.Path(os.path.dirname(args.file))
-    os.makedirs(os.path.dirname(args.file), exist_ok = True)
+    os.makedirs(os.path.dirname(args.file), exist_ok=True)
     with open(args.file, "w+") as f:
         f.write("servers:\n")
 
@@ -60,8 +61,10 @@ servers = parsed_yaml_file["servers"]
 
 # Display error message if config file is empty
 if not servers:
-    print("Please fill {} with somme entries".format(args.file))
-    exit(1)
+    if args.subcommand != "add":
+        print("Add a server first")
+        parser_add.print_help()
+        sys.exit(1)
 
 # Display help
 if not args.subcommand:

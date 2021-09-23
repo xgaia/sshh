@@ -78,8 +78,11 @@ if args.subcommand == 'groups':
 
 # List servers
 if args.subcommand == 'list':
+    #FIXME: sort once
+    sorted_list_tmp = sorted(servers, key=lambda k: k['name'])
+    sorted_list = sorted(sorted_list_tmp, key=lambda k: k['group'])
     pprint_header()
-    for server in servers:
+    for server in sorted_list:
         if args.group:
             requested_groups = args.group.split("/")
             server_groups = server["group"].split("/")

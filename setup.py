@@ -19,3 +19,4 @@ setup(
     license='AGPL',
     platforms='Posix; MacOS X; Windows',
     scripts=["build/sshh"]
+)

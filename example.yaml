@@ -1,0 +1,16 @@
+servers:
+  - name: pi
+    address: raspberry.example.org
+    port: 2222
+    user: jdoe
+    group: personal
+  - name: skynet
+    address: 192.168.0.1
+    port: 22
+    user: john
+    group: work/prod
+  - name: backup
+    address: 192.168.0.2
+    port: 2223
+    user: john
+    group: work/backup

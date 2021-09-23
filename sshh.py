@@ -37,6 +37,14 @@ parser_list = subparsers.add_parser('groups')
 parser_connect = subparsers.add_parser('ssh')
 parser_connect.add_argument('--root', action='store_true', help='Connect with root user')
 parser_connect.add_argument('server', help='The server to connect')
+
+# Add
+parser_add = subparsers.add_parser('add')
+parser_add.add_argument('name', help='The server\'s name to add')
+parser_add.add_argument('-a', '--address', help='Server address (user@address)', required=True)
+parser_add.add_argument('-p', '--port', help='Server port', default=22)
+parser_add.add_argument('-g', '--group', help='Server group', required=True)
+
 args = parser.parse_args()
 
 # init config file
@@ -86,3 +94,20 @@ if args.subcommand == 'ssh':
             cmd = "ssh -p {} {}@{}".format(server["port"], user, server["address"])
             # print(cmd)
             retcode = subprocess.call(cmd,shell=True)
+
+# Add a server
+if args.subcommand == "add":
+    # create object
+    obj = {
+        "name": args.name,
+        "address": args.address.split("@")[1],
+        "port": args.port,
+        "user": args.address.split("@")[0],
+        "group": args.group,
+    }
+    # Write it to yaml file
+    if parsed_yaml_file["servers"] is None:
+        parsed_yaml_file["servers"] = []
+    parsed_yaml_file["servers"].append(obj)
+    with open(args.file, "w+") as file:
+        yaml.dump(parsed_yaml_file, file)

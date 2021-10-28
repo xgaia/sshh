@@ -49,9 +49,7 @@ parser_list = subparsers.add_parser('groups')
 
 # Connect
 parser_connect = subparsers.add_parser('ssh')
-parser_connect.add_argument(
-    '--root', action='store_true', help='Connect with root user'
-)
+parser_connect.add_argument('--user', help='Connect with another user')
 parser_connect.add_argument('server', help='The server to connect')
 
 # Add
@@ -138,7 +136,7 @@ if args.subcommand == 'list':
 if args.subcommand == 'ssh':
     for server in servers:
         if server["name"] == args.server:
-            user = "root" if args.root else server["user"]
+            user = args.user if args.user else server["user"]
             cmd = "ssh -p {} {}@{}".format(server["port"], user, server["address"])
             # print(cmd)
             retcode = subprocess.call(cmd, shell=True)

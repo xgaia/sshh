@@ -6,12 +6,19 @@ import yaml
 
 import pathlib
 
+
 def pprint_header():
-    print("Name           Group                    ssh                                Port")
-    print("-------------------------------------------------------------------------------")
+    print(
+        "Name           Group                    ssh                               "
+        " Port"
+    )
+    print(
+        "-------------------------------------------------------------------------------"
+    )
+
 
 def pprint_server(name, group, user, address, port):
-    full =  user + "@" + address
+    full = user + "@" + address
     space_1 = " " * (15 - len(name))
     space_2 = " " * (25 - len(group))
     space_3 = " " * (35 - len(full))
@@ -20,31 +27,41 @@ def pprint_server(name, group, user, address, port):
     print(name + space_1 + group + space_2 + user + "@" + address + space_3 + str(port))
     # print("{} ({}): {}@{}:{}".format(name, group, user, address, port))
 
+
 home = os.path.expanduser("~")
 
 parser = argparse.ArgumentParser(description='Easy manage your ssh servers')
-parser.add_argument('-f', '--file', help='Path to the yaml servers file', default='{}/.config/sshh/servers.yaml'.format(home))
+parser.add_argument(
+    '-f',
+    '--file',
+    help='Path to the yaml servers file',
+    default='{}/.config/sshh/servers.yaml'.format(home),
+)
 
 subparsers = parser.add_subparsers(dest='subcommand')
 
 # List
 parser_list = subparsers.add_parser('list')
-parser_list.add_argument('-g', '--group', help='List server of group')
+parser_list.add_argument('group', help='List server of group', nargs="?")
 
 # Groups
 parser_list = subparsers.add_parser('groups')
 
 # Connect
 parser_connect = subparsers.add_parser('ssh')
-parser_connect.add_argument('--root', action='store_true', help='Connect with root user')
+parser_connect.add_argument(
+    '--root', action='store_true', help='Connect with root user'
+)
 parser_connect.add_argument('server', help='The server to connect')
 
 # Add
 parser_add = subparsers.add_parser('add')
+parser_add.add_argument('server', help='The server to add (user@host:port)')
 parser_add.add_argument('name', help='The server\'s name to add')
-parser_add.add_argument('-a', '--address', help='Server address (user@address)', required=True)
-parser_add.add_argument('-p', '--port', help='Server port', default=22)
 parser_add.add_argument('-g', '--group', help='Server group', required=True)
+
+# Edit
+parser_edit = subparsers.add_parser('edit')
 
 args = parser.parse_args()
 
@@ -78,19 +95,44 @@ if args.subcommand == 'groups':
 
 # List servers
 if args.subcommand == 'list':
-    #FIXME: sort once
+    # FIXME: sort once
     sorted_list_tmp = sorted(servers, key=lambda k: k['name'])
     sorted_list = sorted(sorted_list_tmp, key=lambda k: k['group'])
     pprint_header()
     for server in sorted_list:
         if args.group:
-            requested_groups = args.group.split("/")
-            server_groups = server["group"].split("/")
-            lrg = len(requested_groups)
-            if requested_groups == server_groups[0:lrg]:
-                pprint_server(server["name"], server["group"], server["user"], server["address"], server["port"])
+            if len(args.group.split("/")) == 1:
+                requested_group = args.group
+                server_groups = server["group"].split("/")
+                if requested_group in server_groups:
+                    pprint_server(
+                        server["name"],
+                        server["group"],
+                        server["user"],
+                        server["address"],
+                        server["port"],
+                    )
+
+            else:
+                requested_groups = args.group.split("/")
+                server_groups = server["group"].split("/")
+                lrg = len(requested_groups)
+                if requested_groups == server_groups[0:lrg]:
+                    pprint_server(
+                        server["name"],
+                        server["group"],
+                        server["user"],
+                        server["address"],
+                        server["port"],
+                    )
         else:
-            pprint_server(server["name"], server["group"], server["user"], server["address"], server["port"])
+            pprint_server(
+                server["name"],
+                server["group"],
+                server["user"],
+                server["address"],
+                server["port"],
+            )
 
 # Connect to server
 if args.subcommand == 'ssh':
@@ -99,16 +141,18 @@ if args.subcommand == 'ssh':
             user = "root" if args.root else server["user"]
             cmd = "ssh -p {} {}@{}".format(server["port"], user, server["address"])
             # print(cmd)
-            retcode = subprocess.call(cmd,shell=True)
+            retcode = subprocess.call(cmd, shell=True)
 
 # Add a server
 if args.subcommand == "add":
     # create object
     obj = {
         "name": args.name,
-        "address": args.address.split("@")[1],
-        "port": args.port,
-        "user": args.address.split("@")[0],
+        "user": args.server.split("@")[0],
+        "address": args.server.split("@")[1].split(":")[0],
+        "port": args.server.split("@")[1].split(":")[1]
+        if len(args.server.split("@")[1].split(":")) == 2
+        else 22,
         "group": args.group,
     }
     # Write it to yaml file
@@ -117,3 +161,9 @@ if args.subcommand == "add":
     parsed_yaml_file["servers"].append(obj)
     with open(args.file, "w+") as file:
         yaml.dump(parsed_yaml_file, file)
+
+# Edit servers
+if args.subcommand == "edit":
+    editor = os.environ.get('EDITOR')
+    cmd = "{} {}".format(editor, args.file)
+    retcode = subprocess.call(cmd, shell=True)

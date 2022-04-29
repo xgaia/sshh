@@ -6,6 +6,20 @@ import yaml
 
 import pathlib
 
+def yes_no_question(question=None, default="y"):
+
+    possible_answers = "[Y/n]" if default == "y" else "[y/N]"
+    if question:
+        answer = input("{} {} ".format(question, possible_answers))
+    else:
+        answer = input("{} ".format(possible_answers))
+
+    if not answer:
+        answer = default
+
+    if answer.lower() in ["y", "yes", "o", "oui"]:
+        return True
+    return False
 
 def pprint_header():
     print(
@@ -57,6 +71,13 @@ parser_add = subparsers.add_parser('add')
 parser_add.add_argument('server', help='The server to add (user@host:port)')
 parser_add.add_argument('name', help='The server\'s name to add')
 parser_add.add_argument('-g', '--group', help='Server group', required=True)
+
+# Add
+parser_add = subparsers.add_parser('remove')
+parser_add.add_argument('server', help='The server name to remove')
+parser_add.add_argument('-f', '--force', help='Force remove', action=argparse.BooleanOptionalAction)
+
+# parser.add_argument('--feature', action=argparse.BooleanOptionalAction)
 
 # Edit
 parser_edit = subparsers.add_parser('edit')
@@ -159,6 +180,27 @@ if args.subcommand == "add":
     parsed_yaml_file["servers"].append(obj)
     with open(args.file, "w+") as file:
         yaml.dump(parsed_yaml_file, file)
+
+# remove a server
+if args.subcommand == "remove":
+
+    if not args.force:
+        # print("Remove {}? [Y/n]".format(args.server))
+        if not yes_no_question("Remove {}?".format(args.server)):
+            exit(0)
+
+    new_servers = []
+    for server in servers:
+        if server["name"] != args.server:
+            new_servers.append(server)
+        else:
+            print("{} removed !".format(args.server))
+
+    yaml_dict = {"servers": new_servers}
+
+    with open(args.file, "w+") as file:
+        yaml.dump(yaml_dict, file)
+
 
 # Edit servers
 if args.subcommand == "edit":
